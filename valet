@@ -1,0 +1,153 @@
+#!/usr/bin/php
+<?php
+
+function appendToFile($fileName, $data)
+{
+	file_put_contents($fileName, $data, FILE_APPEND);
+}
+
+function prependToFile($fileName, $data)
+{
+	$previousData = file_get_contents($fileName);
+	$fileData = $data . $previousData;
+	file_put_contents($fileName, $fileData);
+}
+
+function isALaravelInstallation($path)
+{
+	return file_exists($path . 'artisan');
+}
+
+function isAscii($str) {
+    return 0 == preg_match('/[^\x00-\x7F]/', $str);
+}
+
+$dir = getcwd();
+
+if(isset($argv[1]))
+{
+
+	//Detect if asking for help
+
+	if($argv[1] === '-h' || $argv[1] === '--help')
+	{
+		echo '---------------------------' . PHP_EOL;
+		echo ' Valet by Palmenros' . PHP_EOL;
+		echo '---------------------------' . PHP_EOL;
+		echo 'Usage: valet [folder]' . PHP_EOL;
+		echo 'If folder is not specified, the current folder will be the document root.' . PHP_EOL;	
+		echo 'Valet will generate a virtual host and will update the hosts file to create a new server pointing to the document root.' . PHP_EOL;	
+
+		exit(0);
+	}
+
+	if($argv[1][0] == '/')
+	{
+		$path = $argv[1];
+	}
+	else
+	{
+		$folder = $argv[1];
+		$path = "$dir/$folder";
+	}
+
+	if($path[strlen($path) - 1] !== '/')
+	{
+		$path .= '/';
+	}
+
+}
+else
+{
+	$path = "$dir/";
+}
+
+$appName = implode('-', explode(' ', basename($path)));
+$appName = strtolower($appName);
+
+if(!isAscii($appName))
+{
+	echo "Error: '$appName' contains non ASCII characters";
+	exit(1);
+}
+
+$isLaravel = isALaravelInstallation($path);
+
+if($isLaravel)
+{
+	//Set path to public directory
+	$path .= 'public/';
+}
+
+$tld = '.dev';
+$serverName = $appName . $tld;
+
+$virtualHost =  <<<EOT
+
+<VirtualHost *:80>
+	ServerName $serverName
+	DocumentRoot "$path"
+	<Directory "$path">
+		AllowOverride all
+	</Directory>     
+</VirtualHost>
+
+EOT;
+
+
+$address = '127.0.0.1';
+$hostname = 'localhost';
+$host = "$address	$serverName		$hostname" . PHP_EOL;
+
+
+//Ask for confirmation
+
+echo '---------------------------' . PHP_EOL;
+echo ' ADDING A NEW VALET SERVER' . PHP_EOL;
+echo '---------------------------' . PHP_EOL;
+echo "Server name: '$serverName'" . PHP_EOL ;
+echo "Document root: '$path'" . PHP_EOL;
+
+if($isLaravel)
+{
+	echo "Laravel: Yes";
+}
+else
+{
+	echo "Laravel: No";
+}
+
+echo PHP_EOL . PHP_EOL;
+
+echo 'Are you sure you want to add the new server? [y/N] ';
+
+$confirmation = trim(fgets(STDIN));
+
+const httpdConfig = '/etc/httpd/conf/httpd.conf';
+const hosts = '/etc/hosts';
+
+if($confirmation === 'y' || $confirmation === 'Y')
+{
+	echo 'Adding...' . PHP_EOL;	
+
+	if(!is_writable(httpdConfig) || !is_writable(hosts))
+	{
+		echo PHP_EOL;
+		echo 'Error: Permission denied' . PHP_EOL;
+		echo 'Do you have superuser permissions?' . PHP_EOL;
+	}
+	else
+	{
+		appendToFile(httpdConfig, $virtualHost);
+		prependToFile(hosts, $host);
+
+		echo 'Restarting httpd...' . PHP_EOL;
+		exec('systemctl restart httpd');
+		echo 'Done' . PHP_EOL;
+	}
+}
+else
+{
+	echo 'Aborting...' . PHP_EOL;
+}
+

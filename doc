@@ -1,0 +1,21 @@
+#!/bin/bash
+browser="chromium"
+case $1 in
+	php)
+		$browser /home/pedro/Documents/docs/php/index.html ;;	
+	html)
+	
+		$browser /home/pedro/Documents/docs/js/Javascript/developer.mozilla.org/en-US/docs/Web/HTML.html ;;
+	css)	
+		$browser /home/pedro/Documents/docs/js/Javascript/developer.mozilla.org/en-US/docs/Web/CSS.html ;;
+	js)
+		$browser /home/pedro/Documents/docs/js/Javascript/developer.mozilla.org/en-US/docs/Web/JavaScript.html ;;
+	cpp)
+		$browser /home/pedro/Documents/docs/cpp/en/cpp.html ;;
+	c)
+		$browser /home/pedro/Documents/docs/cpp/en/c.html ;;
+	opengl)
+		$browser /home/pedro/Documents/docs/opengl/index.html ;; 
+	*)
+		echo 'Usage: doc [php | html | css | js | c | cpp | opengl]' ;;
+esac
