@@ -16,6 +16,10 @@ case $1 in
 		$browser /home/pedro/Documents/docs/cpp/en/c.html ;;
 	opengl)
 		$browser /home/pedro/Documents/docs/opengl/index.html ;; 
+	laravel)
+		$browser /home/pedro/Documents/docs/laravel/index.html ;;
+	vue)
+		$browser /home/pedro/Documents/docs/vue/v2/guide/index.html ;;
 	*)
-		echo 'Usage: doc [php | html | css | js | c | cpp | opengl]' ;;
+		echo 'Usage: doc [php | laravel | html | css | js | vue | c | cpp | opengl]' ;;
 esac
